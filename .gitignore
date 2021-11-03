@@ -1,0 +1,53 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# XYZ Point Clouds
+*.xyz
+
+# QtCreator aux files
+*.config
+*.creator
+*.creator.user
+*.files
+*.includes
+
+# Autosave
+.autosave
+
+# VSCode
+*.code*
+.vscode/*
+
+# Build and bin
+build/*
+bin/*
