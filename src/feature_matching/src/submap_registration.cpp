@@ -89,6 +89,12 @@ int main(int, char **argv)
     rgbVis(viewer, cloud_1, 0);
     rgbVis(viewer, cloud_1_noisy, 1);
 
+    while (!viewer->wasStopped())
+    {
+      viewer->spinOnce();
+    }
+    viewer->resetStoppedFlag();
+
     // Extract keypoints
     pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_1(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_2(new pcl::PointCloud<pcl::PointXYZ>);
@@ -116,14 +122,13 @@ int main(int, char **argv)
 
     // Extract correspondences between keypoints
     plotCorrespondences(*viewer, *good_correspondences, keypoints_1, keypoints_2);
-
     while (!viewer->wasStopped())
     {
       viewer->spinOnce();
     }
     viewer->resetStoppedFlag();
 
-    // Obtain the best transformation between the two sets of keypoints given the remaining correspondences
+    // Best transformation between the two sets of keypoints given the remaining correspondences
     Eigen::Matrix4f transform;
     TransformationEstimationSVD<PointXYZ, PointXYZ> trans_est;
     trans_est.estimateRigidTransformation(*keypoints_1, *keypoints_2, *good_correspondences, transform);
@@ -133,7 +138,6 @@ int main(int, char **argv)
     viewer->removeAllShapes();
     rgbVis(viewer, cloud_1, 0);
     rgbVis(viewer, cloud_1_noisy, 1);
-
     while (!viewer->wasStopped())
     {
       viewer->spinOnce();
@@ -146,7 +150,6 @@ int main(int, char **argv)
     viewer->removeAllPointClouds();
     rgbVis(viewer, cloud_1, 0);
     rgbVis(viewer, cloud_1_noisy, 1);
-
     while (!viewer->wasStopped())
     {
       viewer->spinOnce();
