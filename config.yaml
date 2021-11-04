@@ -1,4 +1,11 @@
+# Radius for normal estimation and non maxima supression in Harris keypoints detector
 harris_kps_radius: 0.5
+
+# threshold value for detecting corners in Harris keypoints detector
 harris_kps_thres: 1e-6
+
+# 	maximum allowed distance between correspondences in keypoints
 kps_cor_thres: 30.0
+
+# maximum allowed distance between correspondences in features
 feats_cor_thres: 40.0
