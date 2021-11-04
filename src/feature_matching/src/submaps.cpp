@@ -370,7 +370,7 @@ SubmapsVec createSubmaps(SubmapsVec& pings, int submap_size){
     return submaps_vec;
 }
 
-SubmapsVec createMap(SubmapsVec& pings, int submap_size){
+SubmapsVec createMap(SubmapsVec& pings){
 
     SubmapsVec submaps_vec;
     std::vector<Eigen::Isometry3f, Eigen::aligned_allocator<Eigen::Isometry3f>> pings_tfs;
@@ -387,32 +387,14 @@ SubmapsVec createMap(SubmapsVec& pings, int submap_size){
         }
         auv_track->row(cnt) = submap_k->submap_tf_.translation().array().transpose().cast<double>();
         cnt++;
-        if(cnt > submap_size){
-            cnt = 0;
-            submap_k->submap_id_ = submap_cnt;
-            submap_k->submap_tf_ = pings_tfs.at(submap_size/2);
-            pings_tfs.clear();
-            submap_k->auv_tracks_ = *auv_track;
-            delete auv_track;
-            auv_track = new Eigen::MatrixXd();
-
-            if(submap_cnt>0){
-                Eigen::Quaternionf rot_k = Eigen::Quaternionf(submap_k->submap_tf_.linear());
-                Eigen::Quaternionf rot_prev = Eigen::Quaternionf(submaps_vec.at(submap_cnt-1).submap_tf_.linear());
-                auto euler = (rot_k * rot_prev.inverse()).toRotationMatrix().eulerAngles(0,1,2);
-                if(std::abs(euler(2)) > M_PI*0.9){
-                    swath_cnt++;
-                }
-            }
-            submap_cnt++;
-            submap_k->swath_id_ = swath_cnt;
-
-            submaps_vec.push_back(*submap_k);
-            delete submap_k;
-            submap_k = new SubmapObj;
-        }
     }
-    delete auv_track;
+    cnt = 0;
+    submap_k->submap_id_ = cnt;
+    submap_k->submap_tf_ = pings_tfs.at(cnt);
+    pings_tfs.clear();
+    submap_k->auv_tracks_ = *auv_track;
+    submap_k->swath_id_ = swath_cnt;
+    submaps_vec.push_back(*submap_k);
 
     return submaps_vec;
 }

@@ -49,7 +49,8 @@ int main(int argc, char** argv){
     viewer->setBackgroundColor(0.0, 0.0, 0.0);
 
     SubmapsVec traj_pings = parsePingsAUVlib(std_pings);
-    SubmapsVec submaps_gt = createSubmaps(traj_pings, submap_size);
+    // SubmapsVec submaps_gt = createSubmaps(traj_pings, submap_size);
+    SubmapsVec submaps_gt = createMap(traj_pings);
 
     // Save submaps to disk
     int i = 0;

@@ -103,7 +103,7 @@ SubmapsVec parsePingsAUVlib(std_data::mbes_ping::PingsT& pings);
 
 SubmapsVec createSubmaps(SubmapsVec& pings, int submap_size);
 
-SubmapsVec createMap(SubmapsVec& pings, int submap_size);
+SubmapsVec createMap(SubmapsVec& pings);
 
 void transformSubmapObj(SubmapObj& submap, Isometry3f& poseDRt);
 

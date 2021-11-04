@@ -43,13 +43,13 @@ int main(int argc, char **argv)
     PointCloudT::Ptr cloud_ptr(new PointCloudT);
     for (int i = first_submap; i < last_submap; i++)
     {
+        std::cout << "Submap " << i << std::endl;
         if (pcl::io::loadPCDFile(submaps_path.string() + "/submap_" + std::to_string(i) + ".pcd", *cloud_ptr) < 0)
         {
             PCL_ERROR("Error loading cloud %s.\n", submaps_path.string() + "/submap_" + std::to_string(i) + ".pcd");
             return (-1);
         }
         rgbVis(viewer, cloud_ptr, i);
-        std::cout << "Submap " << i << std::endl;
 
         while (!viewer->wasStopped())
         {

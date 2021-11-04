@@ -168,7 +168,7 @@ void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
                   PointCloud<SHOT352>::Ptr shot_src)
 {
     // Compute normals
-    double radius = 40.0; 
+    double radius = 100.0; 
     NormalEstimation<PointXYZ, Normal> normal_est;
     PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>());
     normal_est.setInputCloud(keypoints);
