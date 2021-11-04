@@ -1,6 +1,6 @@
-# UWLandmarkDetection
+# SubmapsRegistration
 
-Tools for keypoint detection, feature computation and correspondance matching in point clouds, with the view on bathymetric data.
+Tools for keypoint detection, feature computation and correspondance matching in point clouds, with the focus on bathymetric data.
 
 ![](img/gicp.gif)
 
