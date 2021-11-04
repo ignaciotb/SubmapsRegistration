@@ -18,7 +18,7 @@
 using namespace pcl;
 using namespace pcl::io;
 using namespace pcl::console;
-using namespace pcl::registration;
+// using namespace pcl::registration;
 using namespace std;
 using namespace Eigen;
 
@@ -92,7 +92,7 @@ void plotCorrespondences(pcl::visualization::PCLVisualizer &viewer,
     Eigen::Vector3i dr_color = Eigen::Vector3i(rand() % 256, rand() % 256, rand() % 256);
     for (auto corr_i : corrs)
     {
-        viewer.addLine(src->at(corr_i.index_query), trg->at(corr_i.index_match),
+        viewer.addLine(src->at(corr_i.index_match), trg->at(corr_i.index_query),
                        dr_color[0], dr_color[1], dr_color[2], "corr_" + std::to_string(j));
         j++;
     }

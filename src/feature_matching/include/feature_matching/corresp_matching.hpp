@@ -56,9 +56,9 @@ namespace pcl
     };
 }
 
-
-void siftKeypoints(const PointCloudT::Ptr cloud_in, 
-                   PointCloud<PointXYZ>& keypoints_src)
+////////////////////////////////////////////////////////////////////////////////
+void siftKeypoints(const PointCloudT::Ptr cloud_in,
+                   PointCloud<PointXYZ> &keypoints_src)
 {
 
     // Parameters for sift computation
@@ -94,14 +94,16 @@ void siftKeypoints(const PointCloudT::Ptr cloud_in,
     std::cout << "No of SIFT points in the result are " << keypoints_src.size() << std::endl;
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
                      PointCloud<PointXYZ> &keypoints_src)
 {
     // Compute normals
+    double radius = 5.;
     NormalEstimation<PointXYZ, Normal> normal_est;
     PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>());
     normal_est.setInputCloud(src);
-    normal_est.setRadiusSearch(5);
+    normal_est.setRadiusSearch(radius);
     normal_est.compute(*normals);
 
     // Create src with intensity
@@ -121,7 +123,7 @@ void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
     pcl::HarrisKeypoint3D<pcl::PointXYZI, pcl::PointXYZI, Normal> detector;
     detector.setNonMaxSupression(true);
     detector.setInputCloud(src_i);
-    detector.setRadius(2.0);
+    detector.setRadius(2.);
     detector.setNormals(normals);
     detector.setThreshold(1e-6);
     detector.compute(keypoints_src_i);
@@ -162,30 +164,6 @@ void uniformKeypoints(const PointCloud<PointXYZ>::Ptr &src,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void estimateNormals(const PointCloud<PointXYZ>::Ptr &src,
-                     const PointCloud<PointXYZ>::Ptr &tgt,
-                     PointCloud<Normal> &normals_src,
-                     PointCloud<Normal> &normals_tgt)
-{
-    NormalEstimation<PointXYZ, Normal> normal_est;
-    normal_est.setInputCloud(src);
-    normal_est.setRadiusSearch(5); // 50cm
-    normal_est.compute(normals_src);
-
-    normal_est.setInputCloud(tgt);
-    normal_est.compute(normals_tgt);
-
-    // For debugging purposes only: uncomment the lines below and use pcl_viewer to view the results, i.e.:
-    // pcl_viewer normals_src.pcd
-    PointCloud<PointNormal> s, t;
-    copyPointCloud(*src, s);
-    copyPointCloud(normals_src, s);
-    copyPointCloud(*tgt, t);
-    copyPointCloud(normals_tgt, t);
-    savePCDFileBinary("normals_src.pcd", s);
-    savePCDFileBinary("normals_tgt.pcd", t);
-}
-
 void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
                   PointCloud<SHOT352>::Ptr shot_src)
 {
@@ -259,6 +237,31 @@ void estimateFPFH(const PointCloud<PointXYZ>::Ptr &src,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+void estimateNormals(const PointCloud<PointXYZ>::Ptr &src,
+                     const PointCloud<PointXYZ>::Ptr &tgt,
+                     PointCloud<Normal> &normals_src,
+                     PointCloud<Normal> &normals_tgt)
+{
+    NormalEstimation<PointXYZ, Normal> normal_est;
+    normal_est.setInputCloud(src);
+    normal_est.setRadiusSearch(5); // 50cm
+    normal_est.compute(normals_src);
+
+    normal_est.setInputCloud(tgt);
+    normal_est.compute(normals_tgt);
+
+    // For debugging purposes only: uncomment the lines below and use pcl_viewer to view the results, i.e.:
+    // pcl_viewer normals_src.pcd
+    PointCloud<PointNormal> s, t;
+    copyPointCloud(*src, s);
+    copyPointCloud(normals_src, s);
+    copyPointCloud(*tgt, t);
+    copyPointCloud(normals_tgt, t);
+    savePCDFileBinary("normals_src.pcd", s);
+    savePCDFileBinary("normals_tgt.pcd", t);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void findCorrespondences(const PointCloud<FPFHSignature33>::Ptr &fpfhs_src,
                          const PointCloud<FPFHSignature33>::Ptr &fpfhs_tgt,
                          Correspondences &all_correspondences)
@@ -279,7 +282,7 @@ void rejectBadCorrespondences(const CorrespondencesPtr &all_correspondences,
     CorrespondenceRejectorDistance rej;
     rej.setInputSource<PointXYZ>(keypoints_src);
     rej.setInputTarget<PointXYZ>(keypoints_tgt);
-    rej.setMaximumDistance(30); // 1m
+    rej.setMaximumDistance(40); // m
     rej.setInputCorrespondences(all_correspondences);
     rej.getCorrespondences(remaining_correspondences);
 }
