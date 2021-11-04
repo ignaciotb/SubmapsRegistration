@@ -13,6 +13,14 @@ add_executable (submap_registration
 target_link_libraries (submap_registration
 	${PCL_LIBRARIES})
 
+add_executable (lm_extraction
+	src/lm_extraction.cpp)
+target_link_libraries (lm_extraction
+	std_data
+	navi_data
+	data_transforms	
+	${PCL_LIBRARIES})
+
 add_executable (submaps_construction
 	src/create_submaps.cpp
 	src/submaps.cpp)
