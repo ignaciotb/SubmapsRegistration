@@ -7,7 +7,6 @@
 #include <cereal/archives/binary.hpp>
 
 #include "feature_matching/cxxopts.hpp"
-
 #include "feature_matching/utils_visualization.hpp"
 
 using namespace Eigen;
