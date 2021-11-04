@@ -3,14 +3,16 @@
 
 void extractKeypointsCorrespondences(const pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_1,
                                      const pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_2,
-                                     CorrespondencesPtr good_correspondences)
+                                     CorrespondencesPtr good_correspondences,YAML::Node config)
 {
   // Basic correspondence estimation between keypoints
   pcl::registration::CorrespondenceEstimation<pcl::PointXYZ, pcl::PointXYZ> est;
   CorrespondencesPtr all_correspondences(new Correspondences);
   est.setInputTarget(keypoints_1);
   est.setInputSource(keypoints_2);
-  est.determineReciprocalCorrespondences(*all_correspondences, 30.0);
+  double kps_cor_thres = config["kps_cor_thres"].as<double>();
+
+  est.determineReciprocalCorrespondences(*all_correspondences, kps_cor_thres);
   rejectBadCorrespondences(all_correspondences, keypoints_1, keypoints_2, *good_correspondences);
 
   std::cout << "Number of correspondances " << all_correspondences->size() << std::endl;
@@ -21,14 +23,16 @@ void extractFeaturesCorrespondences(const PointCloud<SHOT352>::Ptr &shot_src,
                                     const PointCloud<SHOT352>::Ptr &shot_trg,
                                     const pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_1,
                                     const pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_2,
-                                    CorrespondencesPtr all_correspondences)
+                                    CorrespondencesPtr all_correspondences, YAML::Node config)
 {
   // Basic correspondence estimation between keypoints
   pcl::registration::CorrespondenceEstimation<SHOT352, SHOT352> est;
   // CorrespondencesPtr all_correspondences(new Correspondences);
   est.setInputTarget(shot_src);
   est.setInputSource(shot_trg);
-  est.determineReciprocalCorrespondences(*all_correspondences, 40.0);
+  double feats_cor_thres = config["feats_cor_thres"].as<double>();
+  
+  est.determineReciprocalCorrespondences(*all_correspondences, feats_cor_thres);
   // rejectBadCorrespondences(all_correspondences, keypoints_1, keypoints_2, *good_correspondences);
 
   std::cout << "Number of correspondances " << all_correspondences->size() << std::endl;
@@ -46,7 +50,9 @@ int main(int, char **argv)
         PCL_ERROR ("Error loading cloud %s.\n", argv[1]);
         return (-1);
     }
-
+    // Load the yaml file
+    YAML::Node config = YAML::LoadFile(argv[2]);
+    // cout << "before " << config["harris_kps_radius"] << endl;
     // if (pcl::io::loadPCDFile (argv[2], *cloud_trg) < 0){
     //     PCL_ERROR ("Error loading cloud %s.\n", argv[1]);
     //     return (-1);
@@ -98,8 +104,8 @@ int main(int, char **argv)
     // Extract keypoints
     pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_1(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_2(new pcl::PointCloud<pcl::PointXYZ>);
-    harrisKeypoints(cloud_1, *keypoints_1);
-    harrisKeypoints(cloud_1_noisy, *keypoints_2);
+    harrisKeypoints(cloud_1, *keypoints_1, config);
+    harrisKeypoints(cloud_1_noisy, *keypoints_2, config);
 
     // Visualize keypoints
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> keypoints1_color_handler(keypoints_1, 255, 0, 0);
@@ -117,8 +123,8 @@ int main(int, char **argv)
 
     // Extract correspondences between keypoints/features
     CorrespondencesPtr good_correspondences(new Correspondences);
-    // extractKeypointsCorrespondences(keypoints_1, keypoints_2, good_correspondences);
-    extractFeaturesCorrespondences(shot_1, shot_2, keypoints_1, keypoints_2, good_correspondences);
+    // extractKeypointsCorrespondences(keypoints_1, keypoints_2, good_correspondences, config);
+    extractFeaturesCorrespondences(shot_1, shot_2, keypoints_1, keypoints_2, good_correspondences, config);
 
     // Extract correspondences between keypoints
     plotCorrespondences(*viewer, *good_correspondences, keypoints_1, keypoints_2);
