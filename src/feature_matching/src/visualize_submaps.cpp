@@ -6,7 +6,7 @@
 #include <boost/filesystem.hpp>
 #include <cereal/archives/binary.hpp>
 
-#include "submaps_tools/cxxopts.hpp"
+#include "feature_matching/cxxopts.hpp"
 
 #include "feature_matching/utils_visualization.hpp"
 

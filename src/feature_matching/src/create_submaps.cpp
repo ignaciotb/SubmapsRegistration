@@ -9,8 +9,10 @@
 #include "data_tools/std_data.h"
 // #include "data_tools/benchmark.h"
 
-#include "submaps_tools/cxxopts.hpp"
-#include "submaps_tools/submaps.hpp"
+// #include "submaps_tools/cxxopts.hpp"
+// #include "submaps_tools/submaps.hpp"
+#include <feature_matching/submaps.hpp>
+#include "feature_matching/cxxopts.hpp"
 
 #include "feature_matching/utils_visualization.hpp"
 

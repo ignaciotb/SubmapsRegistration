@@ -21,18 +21,18 @@ void extractFeaturesCorrespondences(const PointCloud<SHOT352>::Ptr &shot_src,
                                     const PointCloud<SHOT352>::Ptr &shot_trg,
                                     const pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_1,
                                     const pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_2,
-                                    CorrespondencesPtr good_correspondences)
+                                    CorrespondencesPtr all_correspondences)
 {
   // Basic correspondence estimation between keypoints
   pcl::registration::CorrespondenceEstimation<SHOT352, SHOT352> est;
-  CorrespondencesPtr all_correspondences(new Correspondences);
+  // CorrespondencesPtr all_correspondences(new Correspondences);
   est.setInputTarget(shot_src);
   est.setInputSource(shot_trg);
   est.determineReciprocalCorrespondences(*all_correspondences, 40.0);
-  rejectBadCorrespondences(all_correspondences, keypoints_1, keypoints_2, *good_correspondences);
+  // rejectBadCorrespondences(all_correspondences, keypoints_1, keypoints_2, *good_correspondences);
 
   std::cout << "Number of correspondances " << all_correspondences->size() << std::endl;
-  std::cout << "Number of good correspondances " << good_correspondences->size() << std::endl;
+  // std::cout << "Number of good correspondances " << good_correspondences->size() << std::endl;
 }
 
 int main(int, char **argv)
@@ -64,8 +64,8 @@ int main(int, char **argv)
     transformation_matrix (0, 1) = -sin (theta);
     transformation_matrix (1, 0) = sin (theta);
     transformation_matrix (1, 1) = cos (theta);
-    transformation_matrix (0, 3) = -10. + d2(seed);
-    transformation_matrix (1, 3) = -10. + d2(seed);
+    transformation_matrix (0, 3) = -10.;// + d2(seed);
+    transformation_matrix (1, 3) = -10.;// + d2(seed);
     transformation_matrix (2, 3) = 0.0;
     pcl::transformPointCloud(*cloud_1, *cloud_1_noisy, transformation_matrix);
 
