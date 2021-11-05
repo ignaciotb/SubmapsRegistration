@@ -11,7 +11,7 @@
 #include <feature_matching/submaps.hpp>
 #include "feature_matching/cxxopts.hpp"
 #include "feature_matching/utils_visualization.hpp"
-
+#include "yaml-cpp/yaml.h"
 
 using namespace Eigen;
 using namespace std;

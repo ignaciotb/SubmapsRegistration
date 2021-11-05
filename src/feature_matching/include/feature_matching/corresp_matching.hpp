@@ -97,18 +97,20 @@ void siftKeypoints(const PointCloudT::Ptr cloud_in,
 
 ////////////////////////////////////////////////////////////////////////////////
 void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
-                     PointCloud<PointXYZ> &keypoints_src, YAML::Node config)
+                     PointCloud<PointXYZ> &keypoints_src, 
+                     YAML::Node config)
 {
     //YAML::Node config = YAML::LoadFile("./config.yaml");
     // cout << config["harris_kps_radius"] << endl;
     // Compute normals
     //double radius = 5.;
-    double radius = config["harris_kps_radius"].as<double>();
+    double harris_radius = config["harris_kps_radius"].as<double>();
+    double normals_radius = config["normals_radius"].as<double>();
     double thres = config["harris_kps_thres"].as<double>();
     NormalEstimation<PointXYZ, Normal> normal_est;
     PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>());
     normal_est.setInputCloud(src);
-    normal_est.setRadiusSearch(radius);
+    normal_est.setRadiusSearch(normals_radius);
     normal_est.compute(*normals);
 
     // Create src with intensity
@@ -128,7 +130,7 @@ void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
     pcl::HarrisKeypoint3D<pcl::PointXYZI, pcl::PointXYZI, Normal> detector;
     detector.setNonMaxSupression(true);
     detector.setInputCloud(src_i);
-    detector.setRadius(0.1);
+    detector.setRadius(harris_radius);
     detector.setNormals(normals);
     detector.setThreshold(thres);
     detector.compute(keypoints_src_i);
@@ -170,14 +172,17 @@ void uniformKeypoints(const PointCloud<PointXYZ>::Ptr &src,
 
 ////////////////////////////////////////////////////////////////////////////////
 void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
-                  PointCloud<SHOT352>::Ptr shot_src)
+                  PointCloud<SHOT352>::Ptr shot_src,
+                  YAML::Node config)
 {
     // Compute normals
-    double radius = 150.0; 
+    double normals_radius = config["normals_feats_radius"].as<double>();
+    double shot_radius = config["shot_feats_radius"].as<double>();
+    double lrf_radius = config["lrf_feats_radius"].as<double>();
     NormalEstimation<PointXYZ, Normal> normal_est;
     PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>());
     normal_est.setInputCloud(keypoints);
-    normal_est.setRadiusSearch(1);
+    normal_est.setRadiusSearch(normals_radius);
     normal_est.compute(*normals);
 
     // // Compute SHOT descriptors
@@ -187,13 +192,13 @@ void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
 
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
     shotEstimation.setSearchMethod(tree);
-    shotEstimation.setRadiusSearch(2);
+    shotEstimation.setRadiusSearch(shot_radius);
     shotEstimation.setKSearch(0);
     
     // Compute reference frames externally
     PointCloud<ReferenceFrame>::Ptr frames(new PointCloud<ReferenceFrame>());
     SHOTLocalReferenceFrameEstimation<PointT, pcl::ReferenceFrame> lrf_estimator;
-    lrf_estimator.setRadiusSearch(1);
+    lrf_estimator.setRadiusSearch(lrf_radius);
     lrf_estimator.setInputCloud(keypoints);
     // lrf_estimator.setIndices(indices2);
     // lrf_estimator.setSearchSurface(points);

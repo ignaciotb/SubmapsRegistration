@@ -7,8 +7,6 @@ find_package(LibXTF REQUIRED)
 find_package(LibGSF REQUIRED)
 find_package(EigenCereal REQUIRED)
 find_package(DataTools REQUIRED)
-# find_package(PkgConfig)
-# pkg_check_modules(yaml-cpp REQUIRED yaml-cpp>=0.5)
 find_package(yaml-cpp)
 include_directories(${yaml_cpp_INCLUDE_DIRS})
 
@@ -24,7 +22,8 @@ target_link_libraries (lm_extraction
 	std_data
 	navi_data
 	data_transforms	
-	${PCL_LIBRARIES})
+	yaml-cpp
+	${PCL_LIBRARIES} ${YAML_CPP_LIBRARIES})
 
 add_executable (submaps_construction
 	src/create_submaps.cpp

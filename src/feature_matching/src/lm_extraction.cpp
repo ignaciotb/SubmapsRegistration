@@ -16,6 +16,9 @@
 
 #include <pcl/ml/kmeans.h>
 
+#include "yaml-cpp/parser.h"
+#include "yaml-cpp/node/detail/node_data.h"
+
 using namespace Eigen;
 using namespace std;
 
@@ -28,11 +31,11 @@ int main(int argc, char **argv)
 {
 
     // Inputs
-    std::string folder_str, input_path, output_path;
-    int first_submap, last_submap;
+    std::string folder_str, input_path, yaml_file;
     cxxopts::Options options("MyProgram", "One line description of MyProgram");
     options.add_options()("help", "Print help")
-    ("input_map", "PCD map", cxxopts::value(input_path));
+    ("input_map", "PCD map", cxxopts::value(input_path))
+    ("yaml_file", "PCD map", cxxopts::value(yaml_file));
 
     auto result = options.parse(argc, argv);
     if (result.count("help"))
@@ -40,6 +43,10 @@ int main(int argc, char **argv)
         cout << options.help({"", "Group"}) << endl;
         exit(0);
     }
+
+    // Load the yaml file
+    boost::filesystem::path yaml_path(yaml_file);
+    YAML::Node config = YAML::LoadFile(yaml_path.string());
 
     // Parse submaps from cereal file
     boost::filesystem::path map_path(input_path);
@@ -49,7 +56,7 @@ int main(int argc, char **argv)
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     viewer->setBackgroundColor(0.0, 0.0, 0.0);
 
-    // Save submaps to disk
+    // Load map
     PointCloudT::Ptr cloud_ptr(new PointCloudT);
 
     if (pcl::io::loadPLYFile(map_path.string(), *cloud_ptr) < 0)
@@ -78,8 +85,8 @@ int main(int argc, char **argv)
     auto t1 = high_resolution_clock::now();
     std::cout << "Extracting keypoints" << std::endl;
     pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_1(new pcl::PointCloud<pcl::PointXYZ>);
-    harrisKeypoints(cloud_ptr, *keypoints_1);
-    
+    harrisKeypoints(cloud_ptr, *keypoints_1, config);
+
     auto t2 = high_resolution_clock::now();
     duration<double, std::milli> ms_double = t2 - t1;
 
@@ -102,7 +109,7 @@ int main(int argc, char **argv)
     // Compute SHOT and save
     std::cout << "Computing SHOT features" << std::endl;
     PointCloud<SHOT352>::Ptr shot_1(new PointCloud<SHOT352>);
-    estimateSHOT(keypoints_1, shot_1);
+    estimateSHOT(keypoints_1, shot_1, config);
 
     // pcl::io::save(submaps_path.string() + "/shot_map.bin",
     //                           *shot_1);

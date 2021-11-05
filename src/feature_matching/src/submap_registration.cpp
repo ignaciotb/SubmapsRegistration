@@ -118,8 +118,8 @@ int main(int, char **argv)
     // Compute SHOT descriptors
     PointCloud<SHOT352>::Ptr shot_1(new PointCloud<SHOT352>);
     PointCloud<SHOT352>::Ptr shot_2(new PointCloud<SHOT352>);
-    estimateSHOT(keypoints_1, shot_1);
-    estimateSHOT(keypoints_2, shot_2);
+    estimateSHOT(keypoints_1, shot_1, config);
+    estimateSHOT(keypoints_2, shot_2, config);
 
     // Extract correspondences between keypoints/features
     CorrespondencesPtr good_correspondences(new Correspondences);
