@@ -59,19 +59,19 @@ int main(int argc, char **argv)
     // Load map
     PointCloudT::Ptr cloud_ptr(new PointCloudT);
 
-    if (pcl::io::loadPLYFile(map_path.string(), *cloud_ptr) < 0)
+    if (pcl::io::loadPCDFile(map_path.string(), *cloud_ptr) < 0)
     {
         PCL_ERROR("Error loading cloud %s.\n", map_path.string());
         return (-1);
     }
 
-    // // Get an uniform grid of keypoints
-    // pcl::console::print_highlight("Before sampling %zd points \n", cloud_ptr->size());
-    // UniformSampling<PointXYZ> uniform;
-    // uniform.setRadiusSearch(1); // m
-    // uniform.setInputCloud(cloud_ptr);
-    // uniform.filter(*cloud_ptr);
-    // pcl::console::print_highlight("After sampling %zd points \n", cloud_ptr->size());
+    // Get an uniform grid of keypoints
+    pcl::console::print_highlight("Before sampling %zd points \n", cloud_ptr->size());
+    UniformSampling<PointXYZ> uniform;
+    uniform.setRadiusSearch(1); // m
+    uniform.setInputCloud(cloud_ptr);
+    uniform.filter(*cloud_ptr);
+    pcl::console::print_highlight("After sampling %zd points \n", cloud_ptr->size());
 
     rgbVis(viewer, cloud_ptr, 0);
 
@@ -86,6 +86,7 @@ int main(int argc, char **argv)
     std::cout << "Extracting keypoints" << std::endl;
     pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints_1(new pcl::PointCloud<pcl::PointXYZ>);
     harrisKeypoints(cloud_ptr, *keypoints_1, config);
+    // siftKeypoints(cloud_ptr, *keypoints_1, config);
 
     auto t2 = high_resolution_clock::now();
     duration<double, std::milli> ms_double = t2 - t1;
@@ -103,23 +104,25 @@ int main(int argc, char **argv)
     }
     viewer->resetStoppedFlag();
 
-    // pcl::io::savePCDFileASCII(submaps_path.string() + "/keypoints_map.pcd",
-    //                           *keypoints_1);
-
     // Compute SHOT and save
-    std::cout << "Computing SHOT features" << std::endl;
-    PointCloud<SHOT352>::Ptr shot_1(new PointCloud<SHOT352>);
-    estimateSHOT(keypoints_1, shot_1, config);
+    std::cout << "Computing features" << std::endl;
+    PointCloud<SHOT352>::Ptr features_1(new PointCloud<SHOT352>);
+    estimateSHOT(keypoints_1, features_1, config);
+
+    // std::cout << "Computing FPFH features" << std::endl;
+    // PointCloud<SHOT352>::Ptr features_1(new PointCloud<FPFHSignature33>);
+    // estimateFPFH(keypoints_1, features_1, config);
 
     // pcl::io::save(submaps_path.string() + "/shot_map.bin",
-    //                           *shot_1);
+    //                           *features_1);
 
     // K-means clustering
     std::cout << "Kmeans clustering" << std::endl;
-    Kmeans k_means(static_cast<int>(shot_1->size()), 352);
-    k_means.setClusterSize(2);
+    Kmeans k_means(static_cast<int>(features_1->size()), 352);
+    int k_clusters = config["k_means_clusters"].as<double>();
+    k_means.setClusterSize(k_clusters);
     // add points to the clustering
-    for (const auto &point : shot_1->points)
+    for (const auto &point : features_1->points)
     {
         std::vector<float> data(352);
         for (int idx = 0; idx < 352; idx++)
@@ -129,9 +132,6 @@ int main(int argc, char **argv)
 
     // k-means clustering
     k_means.kMeans();
-
-    // initialize output cloud
-    pcl::Kmeans::Centroids centroids = k_means.get_centroids();
 
     // NACHO: kmeans.h has been modified locally to add the accessor get_clustersToPoints()
     pcl::Kmeans::ClustersToPoints clusters2points = k_means.get_clustersToPoints();
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
             shot_clusters->points.push_back(p);
         }
         pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> clusters_color(shot_clusters,
-                                                                            rand() % 256, rand() % 256, rand() % 256);
+                                                                            rand() / 256., rand() / 256., rand() / 256.);
         viewer->addPointCloud(shot_clusters, clusters_color, "clusters_src_" + std::to_string(i), v1);
         viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 7,
                                                     "clusters_src_"+std::to_string(i));

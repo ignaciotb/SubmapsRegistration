@@ -59,7 +59,8 @@ namespace pcl
 
 ////////////////////////////////////////////////////////////////////////////////
 void siftKeypoints(const PointCloudT::Ptr cloud_in,
-                   PointCloud<PointXYZ> &keypoints_src)
+                   PointCloud<PointXYZ> &keypoints_src,
+                   YAML::Node config)
 {
 
     // Parameters for sift computation
@@ -141,9 +142,9 @@ void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
     for (const int id : keypoints_indices->indices)
     {
         pcl::PointXYZ point;
-        point.x = src_i->points[id].x;
-        point.y = src_i->points[id].y;
-        point.z = src_i->points[id].z;
+        point.x = src->points[id].x;
+        point.y = src->points[id].y;
+        point.z = src->points[id].z;
         keypoints_src.push_back(point);
     }
 }
@@ -213,13 +214,10 @@ void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
 
 ////////////////////////////////////////////////////////////////////////////////
 void estimateFPFH(const PointCloud<PointXYZ>::Ptr &src,
-                  const PointCloud<PointXYZ>::Ptr &tgt,
                   const PointCloud<Normal>::Ptr &normals_src,
-                  const PointCloud<Normal>::Ptr &normals_tgt,
                   const PointCloud<PointXYZ>::Ptr &keypoints_src,
-                  const PointCloud<PointXYZ>::Ptr &keypoints_tgt,
                   PointCloud<FPFHSignature33> &fpfhs_src,
-                  PointCloud<FPFHSignature33> &fpfhs_tgt)
+                  YAML::Node config)
 {
     FPFHEstimation<PointXYZ, Normal, FPFHSignature33> fpfh_est;
     fpfh_est.setInputCloud(keypoints_src);
@@ -228,10 +226,10 @@ void estimateFPFH(const PointCloud<PointXYZ>::Ptr &src,
     fpfh_est.setSearchSurface(src);
     fpfh_est.compute(fpfhs_src);
 
-    fpfh_est.setInputCloud(keypoints_tgt);
-    fpfh_est.setInputNormals(normals_tgt);
-    fpfh_est.setSearchSurface(tgt);
-    fpfh_est.compute(fpfhs_tgt);
+    // fpfh_est.setInputCloud(keypoints_tgt);
+    // fpfh_est.setInputNormals(normals_tgt);
+    // fpfh_est.setSearchSurface(tgt);
+    // fpfh_est.compute(fpfhs_tgt);
 
     // For debugging purposes only: uncomment the lines below and use pcl_viewer to view the results, i.e.:
     // pcl_viewer fpfhs_src.pcd
@@ -303,44 +301,44 @@ void computeTransformation(const PointCloud<PointXYZ>::Ptr &src,
                            Eigen::Matrix4f &transform,
                            CorrespondencesPtr &result_correspondences)
 {
-    // Get an uniform grid of keypoints
-    PointCloud<PointXYZ>::Ptr keypoints_src(new PointCloud<PointXYZ>),
-        keypoints_tgt(new PointCloud<PointXYZ>);
+    // // Get an uniform grid of keypoints
+    // PointCloud<PointXYZ>::Ptr keypoints_src(new PointCloud<PointXYZ>),
+    //     keypoints_tgt(new PointCloud<PointXYZ>);
 
-    uniformKeypoints(src, tgt, *keypoints_src, *keypoints_tgt);
-    print_info("Found %zu and %zu keypoints for the source and target datasets.\n", static_cast<std::size_t>(keypoints_src->size()), static_cast<std::size_t>(keypoints_tgt->size()));
+    // uniformKeypoints(src, tgt, *keypoints_src, *keypoints_tgt);
+    // print_info("Found %zu and %zu keypoints for the source and target datasets.\n", static_cast<std::size_t>(keypoints_src->size()), static_cast<std::size_t>(keypoints_tgt->size()));
 
-    // Compute normals for all points keypoint
-    PointCloud<Normal>::Ptr normals_src(new PointCloud<Normal>),
-        normals_tgt(new PointCloud<Normal>);
-    estimateNormals(src, tgt, *normals_src, *normals_tgt);
-    print_info("Estimated %zu and %zu normals for the source and target datasets.\n", static_cast<std::size_t>(normals_src->size()), static_cast<std::size_t>(normals_tgt->size()));
+    // // Compute normals for all points keypoint
+    // PointCloud<Normal>::Ptr normals_src(new PointCloud<Normal>),
+    //     normals_tgt(new PointCloud<Normal>);
+    // estimateNormals(src, tgt, *normals_src, *normals_tgt);
+    // print_info("Estimated %zu and %zu normals for the source and target datasets.\n", static_cast<std::size_t>(normals_src->size()), static_cast<std::size_t>(normals_tgt->size()));
 
-    // Compute FPFH features at each keypoint
-    PointCloud<FPFHSignature33>::Ptr fpfhs_src(new PointCloud<FPFHSignature33>),
-        fpfhs_tgt(new PointCloud<FPFHSignature33>);
-    estimateFPFH(src, tgt, normals_src, normals_tgt, keypoints_src, keypoints_tgt, *fpfhs_src, *fpfhs_tgt);
+    // // Compute FPFH features at each keypoint
+    // PointCloud<FPFHSignature33>::Ptr fpfhs_src(new PointCloud<FPFHSignature33>),
+    //     fpfhs_tgt(new PointCloud<FPFHSignature33>);
+    // estimateFPFH(src, tgt, normals_src, normals_tgt, keypoints_src, keypoints_tgt, *fpfhs_src, *fpfhs_tgt);
 
-    // Find correspondences between keypoints in FPFH space
-    CorrespondencesPtr all_correspondences(new Correspondences),
-        good_correspondences(new Correspondences);
-    findCorrespondences(fpfhs_src, fpfhs_tgt, *all_correspondences);
+    // // Find correspondences between keypoints in FPFH space
+    // CorrespondencesPtr all_correspondences(new Correspondences),
+    //     good_correspondences(new Correspondences);
+    // findCorrespondences(fpfhs_src, fpfhs_tgt, *all_correspondences);
 
-    // Reject correspondences based on their XYZ distance
-    rejectBadCorrespondences(all_correspondences, keypoints_src, keypoints_tgt, *good_correspondences);
+    // // Reject correspondences based on their XYZ distance
+    // rejectBadCorrespondences(all_correspondences, keypoints_src, keypoints_tgt, *good_correspondences);
 
-    // Keep only best ones?
-    //   sort(corrs->begin(), corrs->end(), pcl::isBetterCorrespondence);
-    //   reverse(corrs->begin(), corrs->end());
-    result_correspondences.reset(new pcl::Correspondences(*good_correspondences));
+    // // Keep only best ones?
+    // //   sort(corrs->begin(), corrs->end(), pcl::isBetterCorrespondence);
+    // //   reverse(corrs->begin(), corrs->end());
+    // result_correspondences.reset(new pcl::Correspondences(*good_correspondences));
 
-    std::cout << "Number of correspondances " << all_correspondences->size() << std::endl;
-    std::cout << "Number of good correspondances " << good_correspondences->size() << std::endl;
-    // for (const auto& corr : (*good_correspondences))
-    //   std::cerr << corr << std::endl;
-    // Obtain the best transformation between the two sets of keypoints given the remaining correspondences
-    TransformationEstimationSVD<PointXYZ, PointXYZ> trans_est;
-    trans_est.estimateRigidTransformation(*keypoints_src, *keypoints_tgt, *all_correspondences, transform);
+    // std::cout << "Number of correspondances " << all_correspondences->size() << std::endl;
+    // std::cout << "Number of good correspondances " << good_correspondences->size() << std::endl;
+    // // for (const auto& corr : (*good_correspondences))
+    // //   std::cerr << corr << std::endl;
+    // // Obtain the best transformation between the two sets of keypoints given the remaining correspondences
+    // TransformationEstimationSVD<PointXYZ, PointXYZ> trans_est;
+    // trans_est.estimateRigidTransformation(*keypoints_src, *keypoints_tgt, *all_correspondences, transform);
 }
 
 
