@@ -31,9 +31,8 @@ int main(int argc, char **argv)
     std::string folder_str, input_path, output_path;
     int first_submap, last_submap;
     cxxopts::Options options("MyProgram", "One line description of MyProgram");
-    options.add_options()("help", "Print help")("input_folder", "Path to folder with pcd submaps", cxxopts::value(input_path))
-    ("first_submap", "Index of first submap from folder to visualize", cxxopts::value(first_submap))
-    ("last_submap", "Index of last submap from folder to visualize", cxxopts::value(last_submap));
+    options.add_options()("help", "Print help")
+    ("input_map", "PCD map", cxxopts::value(input_path));
 
     auto result = options.parse(argc, argv);
     if (result.count("help"))
@@ -43,8 +42,8 @@ int main(int argc, char **argv)
     }
 
     // Parse submaps from cereal file
-    boost::filesystem::path submaps_path(input_path);
-    std::cout << "Input folder " << submaps_path << std::endl;
+    boost::filesystem::path map_path(input_path);
+    std::cout << "Input file " << map_path.string() << std::endl;
 
     // Visualization
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
@@ -52,31 +51,28 @@ int main(int argc, char **argv)
 
     // Save submaps to disk
     PointCloudT::Ptr cloud_ptr(new PointCloudT);
-    for (int i = first_submap; i < last_submap; i++)
+
+    if (pcl::io::loadPLYFile(map_path.string(), *cloud_ptr) < 0)
     {
-        std::cout << "Submap " << i << std::endl;
-        if (pcl::io::loadPCDFile(submaps_path.string() + "/submap_" + std::to_string(i) + ".pcd", *cloud_ptr) < 0)
-        {
-            PCL_ERROR("Error loading cloud %s.\n", submaps_path.string() + "/submap_" + std::to_string(i) + ".pcd");
-            return (-1);
-        }
-
-        // Get an uniform grid of keypoints
-        pcl::console::print_highlight("Before sampling %zd points \n", cloud_ptr->size());
-        UniformSampling<PointXYZ> uniform;
-        uniform.setRadiusSearch(1); // m
-        uniform.setInputCloud(cloud_ptr);
-        uniform.filter(*cloud_ptr);
-        pcl::console::print_highlight("After sampling %zd points \n", cloud_ptr->size());
-
-        rgbVis(viewer, cloud_ptr, i);
-
-        while (!viewer->wasStopped())
-        {
-            viewer->spinOnce();
-        }
-        viewer->resetStoppedFlag();
+        PCL_ERROR("Error loading cloud %s.\n", map_path.string());
+        return (-1);
     }
+
+    // // Get an uniform grid of keypoints
+    // pcl::console::print_highlight("Before sampling %zd points \n", cloud_ptr->size());
+    // UniformSampling<PointXYZ> uniform;
+    // uniform.setRadiusSearch(1); // m
+    // uniform.setInputCloud(cloud_ptr);
+    // uniform.filter(*cloud_ptr);
+    // pcl::console::print_highlight("After sampling %zd points \n", cloud_ptr->size());
+
+    rgbVis(viewer, cloud_ptr, 0);
+
+    while (!viewer->wasStopped())
+    {
+        viewer->spinOnce();
+    }
+    viewer->resetStoppedFlag();
 
     // Extract keypoints
     auto t1 = high_resolution_clock::now();

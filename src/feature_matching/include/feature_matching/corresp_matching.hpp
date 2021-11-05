@@ -105,7 +105,6 @@ void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
     //double radius = 5.;
     double radius = config["harris_kps_radius"].as<double>();
     double thres = config["harris_kps_thres"].as<double>();
-
     NormalEstimation<PointXYZ, Normal> normal_est;
     PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>());
     normal_est.setInputCloud(src);
@@ -129,7 +128,7 @@ void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
     pcl::HarrisKeypoint3D<pcl::PointXYZI, pcl::PointXYZI, Normal> detector;
     detector.setNonMaxSupression(true);
     detector.setInputCloud(src_i);
-    detector.setRadius(2.);
+    detector.setRadius(0.1);
     detector.setNormals(normals);
     detector.setThreshold(thres);
     detector.compute(keypoints_src_i);
@@ -174,11 +173,11 @@ void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
                   PointCloud<SHOT352>::Ptr shot_src)
 {
     // Compute normals
-    double radius = 100.0; 
+    double radius = 150.0; 
     NormalEstimation<PointXYZ, Normal> normal_est;
     PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>());
     normal_est.setInputCloud(keypoints);
-    normal_est.setRadiusSearch(radius);
+    normal_est.setRadiusSearch(1);
     normal_est.compute(*normals);
 
     // // Compute SHOT descriptors
@@ -188,13 +187,13 @@ void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
 
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
     shotEstimation.setSearchMethod(tree);
-    shotEstimation.setRadiusSearch(radius);
+    shotEstimation.setRadiusSearch(2);
     shotEstimation.setKSearch(0);
     
     // Compute reference frames externally
     PointCloud<ReferenceFrame>::Ptr frames(new PointCloud<ReferenceFrame>());
     SHOTLocalReferenceFrameEstimation<PointT, pcl::ReferenceFrame> lrf_estimator;
-    lrf_estimator.setRadiusSearch(radius);
+    lrf_estimator.setRadiusSearch(1);
     lrf_estimator.setInputCloud(keypoints);
     // lrf_estimator.setIndices(indices2);
     // lrf_estimator.setSearchSurface(points);

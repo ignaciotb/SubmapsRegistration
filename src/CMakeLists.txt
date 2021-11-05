@@ -14,9 +14,9 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 or C++11 support. Please use a different C++ compiler.")
 endif()
 
+# find_package(Open3D REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(PCL 1.7 REQUIRED)
-#find_package(OpenCV REQUIRED)
+find_package(PCL 1.10 REQUIRED)
 
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
