@@ -8,6 +8,7 @@ Tools for keypoint detection, feature computation and correspondance matching in
 * PCL  http://pointclouds.org/
 * EIGEN http://eigen.tuxfamily.org/
 * Auvlib https://github.com/nilsbore/auvlib
+* ymal-cpp https://github.com/jbeder/yaml-cpp
 
 ## Building
 
@@ -23,7 +24,7 @@ Avalible under the `bin` folder:
 
 Registration of a pointcloud against itself after a random transformation
 ```
-./submap_registration ../meshes/submap_1.pcd
+./submap_registration ../meshes/submap_1.pcd ../config.yaml
 ```
 And hit 'q' on the window to go through the registration steps:
 1. Keypoints extraction
@@ -42,3 +43,5 @@ Util for visualizing the output submaps within the range [first_submap,last_subm
 ./visualize_submaps --input_folder /path/to/folder/with/pcd --first_submap 200 --last_submap 250
 ```
 
+## Tuning
+There are some important parameters to tune, they are written in `config.yaml`. So that you do not need to build every time you change the parameters during tuning. 

@@ -31,6 +31,7 @@
 #include <pcl/features/shot.h>
 #include <pcl/features/feature.h>
 #include <pcl/features/shot_lrf.h>
+#include "yaml-cpp/yaml.h"
 
 using namespace pcl;
 using namespace pcl::io;
@@ -96,10 +97,15 @@ void siftKeypoints(const PointCloudT::Ptr cloud_in,
 
 ////////////////////////////////////////////////////////////////////////////////
 void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
-                     PointCloud<PointXYZ> &keypoints_src)
+                     PointCloud<PointXYZ> &keypoints_src, YAML::Node config)
 {
+    //YAML::Node config = YAML::LoadFile("./config.yaml");
+    // cout << config["harris_kps_radius"] << endl;
     // Compute normals
-    double radius = 5.;
+    //double radius = 5.;
+    double radius = config["harris_kps_radius"].as<double>();
+    double thres = config["harris_kps_thres"].as<double>();
+
     NormalEstimation<PointXYZ, Normal> normal_est;
     PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>());
     normal_est.setInputCloud(src);
@@ -125,7 +131,7 @@ void harrisKeypoints(const PointCloud<PointXYZ>::Ptr &src,
     detector.setInputCloud(src_i);
     detector.setRadius(2.);
     detector.setNormals(normals);
-    detector.setThreshold(1e-6);
+    detector.setThreshold(thres);
     detector.compute(keypoints_src_i);
     pcl::console::print_highlight("Normals %zd \n", normals->size());
     pcl::console::print_highlight("Detected %zd points \n", keypoints_src_i.size());
