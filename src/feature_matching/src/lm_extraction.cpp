@@ -2,6 +2,8 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <cereal/archives/binary.hpp>
@@ -10,7 +12,9 @@
 #include "feature_matching/utils_visualization.hpp"
 #include <feature_matching/corresp_matching.hpp>
 
-#include <chrono>
+#include <pcl/io/auto_io.h>
+
+#include <pcl/ml/kmeans.h>
 
 using namespace Eigen;
 using namespace std;
@@ -27,7 +31,9 @@ int main(int argc, char **argv)
     std::string folder_str, input_path, output_path;
     int first_submap, last_submap;
     cxxopts::Options options("MyProgram", "One line description of MyProgram");
-    options.add_options()("help", "Print help")("input_folder", "Path to folder with pcd submaps", cxxopts::value(input_path))("first_submap", "Index of first submap from folder to visualize", cxxopts::value(first_submap))("last_submap", "Index of last submap from folder to visualize", cxxopts::value(last_submap));
+    options.add_options()("help", "Print help")("input_folder", "Path to folder with pcd submaps", cxxopts::value(input_path))
+    ("first_submap", "Index of first submap from folder to visualize", cxxopts::value(first_submap))
+    ("last_submap", "Index of last submap from folder to visualize", cxxopts::value(last_submap));
 
     auto result = options.parse(argc, argv);
     if (result.count("help"))
@@ -88,18 +94,61 @@ int main(int argc, char **argv)
 
     std::cout << "Keypoint extraction duration (s) " << ms_double.count()/1000. << std::endl;
 
-    pcl::io::savePCDFileASCII(submaps_path.string() + "/keypoints_map.pcd",
-                              *keypoints_1);
+    while (!viewer->wasStopped())
+    {
+        viewer->spinOnce();
+    }
+    viewer->resetStoppedFlag();
+
+    // pcl::io::savePCDFileASCII(submaps_path.string() + "/keypoints_map.pcd",
+    //                           *keypoints_1);
 
     // Compute SHOT and save
+    std::cout << "Computing SHOT features" << std::endl;
     PointCloud<SHOT352>::Ptr shot_1(new PointCloud<SHOT352>);
     estimateSHOT(keypoints_1, shot_1);
 
-    PCLPointCloud2 s, t, out;
-    toPCLPointCloud2(*keypoints_1, s);
-    toPCLPointCloud2(*shot_1, t);
-    concatenateFields(s, t, out);
-    savePCDFile(submaps_path.string() + "/shot_map.pcd", out);
+    // pcl::io::save(submaps_path.string() + "/shot_map.bin",
+    //                           *shot_1);
+
+    // K-means clustering
+    std::cout << "Kmeans clustering" << std::endl;
+    Kmeans k_means(static_cast<int>(shot_1->size()), 352);
+    k_means.setClusterSize(2);
+    // add points to the clustering
+    for (const auto &point : shot_1->points)
+    {
+        std::vector<float> data(352);
+        for (int idx = 0; idx < 352; idx++)
+            data[idx] = point.descriptor[idx];
+        k_means.addDataPoint(data);
+    }
+
+    // k-means clustering
+    k_means.kMeans();
+
+    // initialize output cloud
+    pcl::Kmeans::Centroids centroids = k_means.get_centroids();
+
+    // NACHO: kmeans.h has been modified locally to add the accessor get_clustersToPoints()
+    pcl::Kmeans::ClustersToPoints clusters2points = k_means.get_clustersToPoints();
+    std::cout << "Clusters " << clusters2points.size() << std::endl;
+
+    viewer->removePointCloud("keypoints_src", v1);
+    PointCloud<PointT>::Ptr shot_clusters(new PointCloud<PointT>);
+    for(int i=0; i<clusters2points.size(); i++){
+        shot_clusters->points.clear();
+        for (const auto &pid : clusters2points[i])
+        {
+            PointT p = keypoints_1->points[pid];
+            shot_clusters->points.push_back(p);
+        }
+        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> clusters_color(shot_clusters,
+                                                                            rand() % 256, rand() % 256, rand() % 256);
+        viewer->addPointCloud(shot_clusters, clusters_color, "clusters_src_" + std::to_string(i), v1);
+        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 7,
+                                                    "clusters_src_"+std::to_string(i));
+    }
 
     while (!viewer->wasStopped())
     {
