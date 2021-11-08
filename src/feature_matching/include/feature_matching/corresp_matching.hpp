@@ -64,10 +64,10 @@ void siftKeypoints(const PointCloudT::Ptr cloud_in,
 {
 
     // Parameters for sift computation
-    const float min_scale = 1.f;
-    const int n_octaves = 6;
-    const int n_scales_per_octave = 4;
-    const float min_contrast = 0.005f;
+    const float min_scale = config["sift_kps_min_scale"].as<float>();
+    const int n_octaves = config["sift_kps_n_octaves"].as<int>();
+    const int n_scales_per_octave = config["sift_kps_n_scales_per_octave"].as<int>();
+    const float min_contrast = config["sift_kps_min_contrast"].as<float>();
 
     // Estimate the sift interest points using z values from xyz as the Intensity variants
     pcl::PointCloud<pcl::PointWithScale> result;
@@ -173,7 +173,7 @@ void uniformKeypoints(const PointCloud<PointXYZ>::Ptr &src,
 
 ////////////////////////////////////////////////////////////////////////////////
 void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
-                  PointCloud<SHOT352>::Ptr shot_src,
+                  PointCloud<SHOT352>::Ptr& shot_src,
                   YAML::Node config)
 {
     // Compute normals
@@ -213,18 +213,27 @@ void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void estimateFPFH(const PointCloud<PointXYZ>::Ptr &src,
-                  const PointCloud<Normal>::Ptr &normals_src,
-                  const PointCloud<PointXYZ>::Ptr &keypoints_src,
-                  PointCloud<FPFHSignature33> &fpfhs_src,
+void estimateFPFH(const PointCloud<PointXYZ>::Ptr &keypoints_cloud,
+                  PointCloud<FPFHSignature33>::Ptr &fpfhs_cloud,
                   YAML::Node config)
 {
+
+    double fpfh_radius = config["fpfh_feats_radius"].as<double>();
+    double normals_radius = config["normals_feats_radius"].as<double>();
+
+    NormalEstimation<PointXYZ, Normal> normal_est;
+    PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>());
+    normal_est.setInputCloud(keypoints_cloud);
+    normal_est.setRadiusSearch(normals_radius);
+    normal_est.compute(*normals);
+
     FPFHEstimation<PointXYZ, Normal, FPFHSignature33> fpfh_est;
-    fpfh_est.setInputCloud(keypoints_src);
-    fpfh_est.setInputNormals(normals_src);
-    fpfh_est.setRadiusSearch(1); // 1m
-    fpfh_est.setSearchSurface(src);
-    fpfh_est.compute(fpfhs_src);
+    fpfh_est.setInputCloud(keypoints_cloud);
+    fpfh_est.setInputNormals(normals);
+    fpfh_est.setRadiusSearch(fpfh_radius); // 1m
+    // fpfh_est.setSearchSurface(src);
+    fpfh_est.compute(*fpfhs_cloud);
+    std::cout << "FPFH output size: " << fpfhs_cloud->points.size() << std::endl;
 
     // fpfh_est.setInputCloud(keypoints_tgt);
     // fpfh_est.setInputNormals(normals_tgt);
