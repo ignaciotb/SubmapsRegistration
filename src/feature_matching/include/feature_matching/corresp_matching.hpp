@@ -185,6 +185,15 @@ void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
     normal_est.setInputCloud(keypoints);
     normal_est.setRadiusSearch(normals_radius);
     normal_est.compute(*normals);
+   
+    // Compute reference frames externally
+    PointCloud<ReferenceFrame>::Ptr frames(new PointCloud<ReferenceFrame>());
+    SHOTLocalReferenceFrameEstimation<PointT, pcl::ReferenceFrame> lrf_estimator;
+    lrf_estimator.setRadiusSearch(lrf_radius);
+    lrf_estimator.setInputCloud(keypoints);
+    // lrf_estimator.setIndices(indices2);
+    // lrf_estimator.setSearchSurface(points);
+    lrf_estimator.compute(*frames);
 
     // // Compute SHOT descriptors
     pcl::SHOTEstimation<pcl::PointXYZ, pcl::Normal, pcl::SHOT352> shotEstimation;
@@ -195,19 +204,8 @@ void estimateSHOT(const PointCloud<PointXYZ>::Ptr &keypoints,
     shotEstimation.setSearchMethod(tree);
     shotEstimation.setRadiusSearch(shot_radius);
     shotEstimation.setKSearch(0);
-    
-    // Compute reference frames externally
-    PointCloud<ReferenceFrame>::Ptr frames(new PointCloud<ReferenceFrame>());
-    SHOTLocalReferenceFrameEstimation<PointT, pcl::ReferenceFrame> lrf_estimator;
-    lrf_estimator.setRadiusSearch(lrf_radius);
-    lrf_estimator.setInputCloud(keypoints);
-    // lrf_estimator.setIndices(indices2);
-    // lrf_estimator.setSearchSurface(points);
-    lrf_estimator.compute(*frames);
-
     shotEstimation.setInputReferenceFrames(frames);
 
-    // Actually compute the spin images
     shotEstimation.compute(*shot_src);
     std::cout << "SHOT output size: " << shot_src->points.size() << std::endl;
 }

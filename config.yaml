@@ -31,7 +31,7 @@ lrf_feats_radius: 60.
 ## FPFH
 fpfh: True
 # Radius for FPFH computation
-fpfh_feats_radius: 30.
+fpfh_feats_radius: 50.
 
 # Radius for normals estimation
 normals_feats_radius: 50.
@@ -45,4 +45,4 @@ kps_cor_thres: 30.0
 feats_cor_thres: 40.0
 
 ## KMEANS CLUSTERING 
-k_means_clusters: 20
+k_means_clusters: 15
