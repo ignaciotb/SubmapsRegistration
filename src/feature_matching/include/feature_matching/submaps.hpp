@@ -44,7 +44,9 @@ public:
 
     SubmapObj(const unsigned int& submap_id, const unsigned int& swath_id, PointCloudT& submap_pcl);
 
-    void findOverlaps(bool submaps_in_map_tf, std::vector<SubmapObj, Eigen::aligned_allocator<SubmapObj> > &submaps_set);
+    void findOverlaps(bool submaps_in_map_tf, 
+                      double overlap_area,
+                      std::vector<SubmapObj, Eigen::aligned_allocator<SubmapObj> > &submaps_set);
 
     Eigen::Matrix<double, 6, 6> createDRWeights();
 
@@ -107,7 +109,8 @@ SubmapsVec createMap(SubmapsVec& pings, int submap_size);
 
 void transformSubmapObj(SubmapObj& submap, Isometry3f& poseDRt);
 
-std::pair<int, corners> getSubmapCorners(bool submaps_in_map_tf, const SubmapObj& submap);
+std::pair<int, corners> getSubmapCorners(bool submaps_in_map_tf, const SubmapObj& submap,
+                                         double overlap_area);
 
 bool checkSubmapsOverlap(const corners submap_i_corners, const corners submap_k_corners);
 

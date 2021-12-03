@@ -62,15 +62,16 @@ Eigen::Matrix<double, 6, 6> SubmapObj::createDRWeights(){
 }
 
 void SubmapObj::findOverlaps(bool submaps_in_map_tf,
+    double overlap_area,
     std::vector<SubmapObj, Eigen::aligned_allocator<SubmapObj> > &submaps_set){
 
     overlaps_idx_.clear();
 
     std::vector<std::pair<int, corners>> corners_set;
-    corners submap_i_corners = std::get<1>(getSubmapCorners(submaps_in_map_tf, *this));
+    corners submap_i_corners = std::get<1>(getSubmapCorners(submaps_in_map_tf, *this, overlap_area));
     // Extract corners of all submaps
     for(SubmapObj& submap_j: submaps_set){
-        corners_set.push_back(getSubmapCorners(submaps_in_map_tf, submap_j));
+        corners_set.push_back(getSubmapCorners(submaps_in_map_tf, submap_j, overlap_area));
     }
 
     bool overlap_flag;
@@ -85,7 +86,8 @@ void SubmapObj::findOverlaps(bool submaps_in_map_tf,
 }
 
 
-std::pair<int, corners> getSubmapCorners(bool submaps_in_map_tf, const SubmapObj& submap){
+std::pair<int, corners> getSubmapCorners(bool submaps_in_map_tf, const SubmapObj& submap,
+                                         double overlap_area){
 
     // Transform point cloud back to map frame
     Eigen::MatrixXf points;
@@ -100,11 +102,11 @@ std::pair<int, corners> getSubmapCorners(bool submaps_in_map_tf, const SubmapObj
 
     // Extract corners
     double min_x, min_y, max_x, max_y;
-    double overlap_coverage = 0.9; // Reduce submap area to look for overlap by this factor
-    min_x = points.col(0).minCoeff() * overlap_coverage;   // min x
-    min_y = points.col(1).minCoeff() * overlap_coverage;   // min y
-    max_x = points.col(0).maxCoeff() * overlap_coverage;   // max x
-    max_y = points.col(1).maxCoeff() * overlap_coverage;   // max y
+    // Reduce submap area to look for overlap by this factor
+    min_x = points.col(0).minCoeff() * overlap_area;   // min x
+    min_y = points.col(1).minCoeff() * overlap_area;   // min y
+    max_x = points.col(0).maxCoeff() * overlap_area;   // max x
+    max_y = points.col(1).maxCoeff() * overlap_area;   // max y
 
     // 2D transformation of the corners back to original place
 //    Eigen::Isometry2d submap_tf2d = (Eigen::Isometry2d) submap.submap_tf_.linear().cast<double>();
@@ -532,7 +534,7 @@ void transformSubmapObj(SubmapObj& submap, Eigen::Isometry3f& poseDRt){
 }
 
 bool checkSubmapSize(const SubmapObj& submap_i){
-    std::pair<int, corners> submap_corners = getSubmapCorners(true, submap_i);
+    std::pair<int, corners> submap_corners = getSubmapCorners(true, submap_i, 1.);
     double grid_x, grid_y;
     unsigned int k_next;
     bool reject = false;

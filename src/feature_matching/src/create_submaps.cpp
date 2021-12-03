@@ -21,10 +21,12 @@ int main(int argc, char** argv){
     // Inputs
     std::string folder_str, input_path, output_path;
     int submap_size;
+    double overlap_area;
     cxxopts::Options options("MyProgram", "One line description of MyProgram");
     options.add_options()
         ("help", "Print help")
         ("submap_size", "Number of pings per submap", cxxopts::value(submap_size))
+        ("overlap", "Minimum overlapping area to consider overlap. 0-1", cxxopts::value(overlap_area))
         ("output_folder", "Output path to folder", cxxopts::value(output_path))
         ("mbes_cereal", "Input path to MBES pings in cereal file", cxxopts::value(input_path));
 
@@ -63,6 +65,43 @@ int main(int argc, char** argv){
     }
 
     std::cout << "Number of submaps " << submaps_gt.size() << std::endl;
+
+    // Detect overlaps between submaps
+    SubmapsVec submaps_prev, submaps_reg;
+    ofstream fileOutputStream;
+    fileOutputStream.open("loop_closures.txt", std::ofstream::out);
+
+    double info_thres = 0.1;
+    for(SubmapObj& submap_i: submaps_gt){
+        std::cout << " Submap " << submap_i.submap_id_ << std::endl;
+
+        // Look for loop closures
+        for(SubmapObj& submap_k: submaps_reg){
+            // Don't look for overlaps between consecutive ones
+            if(submap_k.submap_id_ != submap_i.submap_id_ - 1){
+                submaps_prev.push_back(submap_k);
+            }
+        }
+        // Submaps in map_frame?
+        bool submaps_in_map_tf = true;
+        submap_i.findOverlaps(submaps_in_map_tf, overlap_area, submaps_prev);
+        submaps_prev.clear();
+
+        // If potential loop closure detected
+        if(!submap_i.overlaps_idx_.empty()){
+            // Save loop closure to txt
+            if(fileOutputStream.is_open()){
+                fileOutputStream << submap_i.submap_id_;
+                for(unsigned int j=0; j<submap_i.overlaps_idx_.size(); j++){
+                    fileOutputStream << " " << submap_i.overlaps_idx_.at(j);
+                }
+                fileOutputStream << "\n";
+            }
+        }
+        // Nacho: this can be done better to save mem
+        submaps_reg.push_back(submap_i);    // Add registered submap_i
+    }
+    fileOutputStream.close();
 
     // // Benchmark GT
     // benchmark::track_error_benchmark benchmark("real_data");
