@@ -35,7 +35,7 @@ And hit 'q' on the window to go through the registration steps:
 
 Constructs submaps from a bathymetry survey with 'submap_size' pings per submap and saves them as 'pcd' files in the output folder
 ```
-./submaps_construction --submap_size 200 --mbes_cereal /path/to/file.cereal --output_folder /path/to/output/folder
+./submaps_construction --submap_size 200 --overlap 0.6 --mbes_cereal /path/to/file.cereal --output_folder /path/to/output/folder
 ```
 
 Util for visualizing the output submaps within the range [first_submap,last_submap] from the previous app one by one
